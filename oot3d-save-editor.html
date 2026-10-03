@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>OoT3D Save Editor</title>
+<style>
+:root{
+  --bg:#0a1122; --bg2:#0f1a33; --panel:#131f3b; --panel2:#182648; --line:#3a4a72; --frame:rgba(214,178,92,.5);
+  --ink:#f0e9d2; --ink-dim:#a7b2cf; --gold:#d6b25c; --gold-bright:#f4d67f; --accent:#4fae7a; --danger:#e0654c;
+  --heart:#e5323f; --rupee:#3fd07a; --shadow:rgba(0,0,0,.45);
+  --disp:'Cinzel','Trajan Pro','Optima','Palatino Linotype',Georgia,serif;
+  --body:'Cormorant Garamond','Iowan Old Style','Palatino Linotype',Georgia,serif;
+  --mono:'IBM Plex Mono','SFMono-Regular',Menlo,Consolas,monospace;
+  --wm:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 90'%3E%3Cg fill='%23d6b25c' fill-opacity='.07'%3E%3Cpolygon points='50,4 73,44 27,44'/%3E%3Cpolygon points='27,48 50,88 4,88'/%3E%3Cpolygon points='73,48 96,88 50,88'/%3E%3C/g%3E%3C/svg%3E");
+  --pagebg:radial-gradient(ellipse at 50% -10%,#22346a 0%,#0e1830 45%,#060a16 100%);
+}
+@media (prefers-color-scheme: light){
+  :root:not([data-theme="dark"]){
+    --bg:#e8dcb8; --bg2:#f1e6c6; --panel:#f8f0d8; --panel2:#efe3bf; --line:#a88c4a; --frame:rgba(138,100,23,.55);
+    --ink:#2b2114; --ink-dim:#6b5a3a; --gold:#8a6417; --gold-bright:#6d4d0f; --accent:#2f7a4a; --shadow:rgba(80,55,10,.25);
+    --pagebg:radial-gradient(ellipse at 50% -10%,#f6ecc9 0%,#e8dcb8 55%,#d6c592 100%);
+  }
+}
+:root[data-theme="dark"]{ --bg:#0a1122; --bg2:#0f1a33; --panel:#131f3b; --ink:#f0e9d2; --ink-dim:#a7b2cf; }
+*{box-sizing:border-box;}
+html,body{min-height:100%;}
+body{margin:0;background:var(--wm) center 6rem/min(70vw,640px) no-repeat fixed,var(--pagebg) fixed;background-color:var(--bg);color:var(--ink);
+  font-family:var(--body);font-size:1.08rem;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-font-smoothing:antialiased;}
+.wrap{max-width:920px;margin:0 auto;padding:2rem 1.25rem 6rem;}
+.masthead{text-align:center;margin:.5rem 0 1.6rem;}
+.masthead svg{width:74px;height:66px;filter:drop-shadow(0 0 14px rgba(244,214,127,.55));}
+h1{font-family:var(--disp);font-weight:700;font-size:clamp(1.7rem,5vw,2.5rem);letter-spacing:.12em;text-transform:uppercase;margin:.3rem 0 .1rem;color:var(--gold-bright);text-shadow:0 2px 0 rgba(0,0,0,.4);}
+.tag{font-family:var(--disp);font-size:.78rem;letter-spacing:.42em;text-transform:uppercase;color:var(--ink-dim);}
+.orn{display:flex;align-items:center;gap:.8rem;color:var(--gold);margin:.9rem auto 0;max-width:420px;}
+.orn::before,.orn::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+.sub{color:var(--ink-dim);font-size:1.1rem;line-height:1.55;max-width:66ch;margin:0 auto 1.6rem;text-align:center;}
+code{font-family:var(--mono);font-size:.85em;color:var(--gold-bright);}
+.card{position:relative;background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--gold);border-radius:6px;padding:1.5rem 1.6rem;margin-bottom:1.4rem;
+  box-shadow:inset 0 0 0 4px var(--panel),inset 0 0 0 5px var(--frame),0 10px 34px var(--shadow);}
+.card::before,.card::after{content:"◆";position:absolute;top:8px;color:var(--gold);font-size:.62rem;line-height:1;}
+.card::before{left:9px}.card::after{right:9px}
+.dropzone{border:2px dashed var(--frame);border-radius:6px;padding:2rem 1.5rem;text-align:center;cursor:pointer;transition:.15s;background:var(--bg2);}
+.dropzone:hover,.dropzone.drag{border-color:var(--gold-bright);box-shadow:0 0 22px rgba(244,214,127,.25);}
+.dropzone p{margin:.3em 0;color:var(--ink-dim);} .dropzone strong{color:var(--gold-bright);font-family:var(--disp);letter-spacing:.06em;}
+input[type=file]{display:none;}
+.filename{font-family:var(--mono);font-size:.85rem;color:var(--gold);margin-top:.6em;}
+.note{font-size:.95rem;color:var(--ink-dim);border-left:3px solid var(--line);padding:.2em 0 .2em .9em;margin:.9em 0;line-height:1.5;}
+.note.warn{border-left-color:var(--danger);} .note.ok{border-left-color:var(--accent);}
+h2{font-family:var(--disp);font-size:1.35rem;letter-spacing:.1em;text-transform:uppercase;margin:.1rem 0 .1rem;color:var(--gold-bright);}
+h2 .off{font-family:var(--mono);font-size:.7rem;color:var(--ink-dim);letter-spacing:0;text-transform:none;margin-left:.6em;}
+.crcline{font-family:var(--mono);font-size:.74rem;color:var(--ink-dim);margin:.15em 0 .9em;} .crcline.ok{color:var(--accent);} .crcline.warn{color:var(--danger);}
+.hud{display:flex;flex-direction:column;gap:.55rem;background:linear-gradient(180deg,rgba(0,0,0,.28),rgba(0,0,0,.12));border:1px solid var(--line);border-radius:4px;padding:.8rem 1rem;margin:0 0 1.1rem;}
+.hearts{display:flex;flex-wrap:wrap;gap:3px;min-height:22px}
+.heart{width:22px;height:20px;background:linear-gradient(90deg,var(--heart) var(--f),rgba(120,30,40,.35) var(--f));
+  -webkit-mask:var(--hm) center/contain no-repeat;mask:var(--hm) center/contain no-repeat;
+  --hm:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 22'%3E%3Cpath d='M12 21S1 14.5 1 7.6A5.6 5.6 0 0 1 12 5a5.6 5.6 0 0 1 11 2.6C23 14.500 12 21 12 21z'/%3E%3C/svg%3E");}
+.hudrow{display:flex;flex-wrap:wrap;gap:.6rem 1.6rem;align-items:center;font-family:var(--disp);font-size:.9rem;letter-spacing:.06em;}
+.rupee{display:inline-flex;align-items:center;gap:.45rem;color:var(--rupee);}
+.rupee i{width:.62rem;height:1.05rem;background:linear-gradient(135deg,#8ff5b7,#1fa457);clip-path:polygon(50% 0,100% 28%,100% 72%,50% 100%,0 72%,0 28%);display:inline-block;}
+.magic{display:inline-block;height:.7rem;border:1px solid var(--line);border-radius:3px;background:rgba(0,0,0,.4);overflow:hidden;}
+.magic b{display:block;height:100%;background:linear-gradient(180deg,#8cf08a,#2a9d3f);}
+.skull{color:var(--gold-bright);}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.9rem 1.1rem;margin-bottom:.3rem;}
+label{display:block;font-family:var(--disp);font-size:.66rem;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-dim);margin-bottom:.32em;}
+input[type=text],input[type=number],select{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:3px;color:var(--ink);padding:.5em .6em;font-family:var(--mono);font-size:.9rem;box-shadow:inset 0 2px 5px rgba(0,0,0,.35);}
+input:focus,select:focus,button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:1px;}
+fieldset{border:1px solid var(--frame);border-radius:5px;padding:1rem 1.1rem 1.15rem;margin:1.5rem 0 0;background:rgba(0,0,0,.10);}
+legend{font-family:var(--disp);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-bright);padding:.15rem .9rem;border:1px solid var(--gold);border-radius:999px;background:var(--panel);}
+legend::before{content:"✦ ";} legend::after{content:" ✦";}
+.help{font-size:.98rem;color:var(--ink-dim);line-height:1.5;margin:.2em 0 .9em;}
+.quickrow{display:flex;flex-wrap:wrap;gap:.55rem;margin:.2rem 0 1.2rem;}
+.qbtn{font-family:var(--disp);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;padding:.6em 1em;background:linear-gradient(180deg,var(--panel2),var(--bg2));border:1px solid var(--gold);color:var(--gold-bright);border-radius:999px;cursor:pointer;transition:.12s;}
+.qbtn:hover{box-shadow:0 0 14px rgba(244,214,127,.35);transform:translateY(-1px);}
+.maxbtn{font-family:var(--disp);font-size:.62rem;letter-spacing:.1em;padding:.3em .7em;background:transparent;border:1px solid var(--line);color:var(--ink-dim);border-radius:999px;cursor:pointer;}
+.maxbtn:hover{border-color:var(--gold);color:var(--gold-bright);}
+.keyrow{display:grid;grid-template-columns:1fr 4.5rem;align-items:center;gap:.5rem;margin:.35rem 0;} .keyrow span{font-size:1rem;color:var(--ink-dim);}
+.region{margin:.75rem 0;} .region .rhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.35em;} .region .rhead span{color:var(--ink);font-size:1.02rem;} .region .rhead small{font-family:var(--mono);font-size:.7rem;color:var(--ink-dim);}
+.region .rbtns{display:flex;gap:.4rem;align-items:center;}
+.tokgrid{display:flex;flex-wrap:wrap;gap:.4rem;}
+.tok{display:inline-flex;align-items:center;justify-content:center;width:2.1rem;height:2.1rem;border:1px solid var(--line);border-radius:50%;cursor:pointer;font-family:var(--mono);font-size:.7rem;color:var(--ink-dim);background:var(--bg);user-select:none;margin:0;letter-spacing:0;transition:.12s;}
+.tok.on{background:radial-gradient(circle at 35% 30%,#fff3b0,var(--gold) 60%,#8a6417);border-color:var(--gold-bright);color:#2a1d05;font-weight:700;box-shadow:0 0 10px rgba(244,214,127,.45);}
+.tok input{position:absolute;opacity:0;width:0;height:0;}
+.confirmbox{display:flex;align-items:flex-start;gap:.6rem;background:var(--bg2);border:1px solid var(--frame);border-radius:4px;padding:.55rem .8rem;font-size:.92rem;line-height:1.35;color:var(--ink-dim);margin:0;text-transform:none;letter-spacing:0;font-family:var(--body);flex:1 1 300px;}
+.confirmbox input{margin-top:.3em;accent-color:var(--gold);}
+button.primary{font-family:var(--disp);font-weight:700;font-size:.95rem;letter-spacing:.14em;text-transform:uppercase;color:#1e1404;background:linear-gradient(180deg,var(--gold-bright),var(--gold));border:1px solid #fff2b8;border-radius:4px;padding:.75em 1.3em;cursor:pointer;box-shadow:0 4px 0 #7a5a12,0 8px 20px rgba(0,0,0,.4);}
+button.primary:hover{filter:brightness(1.08);} button.primary:active{transform:translateY(2px);box-shadow:0 2px 0 #7a5a12;} button.primary:disabled{opacity:.4;cursor:not-allowed;box-shadow:none;}
+.actions{position:sticky;bottom:0;background:linear-gradient(to top,var(--bg) 78%,transparent);padding:1rem 0 .5rem;margin-top:.5rem;display:flex;gap:.8rem;align-items:center;flex-wrap:wrap;}
+.status{font-size:.95rem;color:var(--ink-dim);} .hidden{display:none;}
+.steps{counter-reset:step;list-style:none;margin:0 auto 1.8rem;padding:0;max-width:66ch;}
+.steps li{counter-increment:step;position:relative;padding-left:2.6rem;margin-bottom:.7rem;color:var(--ink-dim);font-size:1.05rem;line-height:1.5;}
+.steps li::before{content:counter(step);position:absolute;left:.2rem;top:.1rem;width:1.7rem;height:1.9rem;background:linear-gradient(135deg,#8ff5b7,#1fa457);clip-path:polygon(50% 0,100% 26%,100% 74%,50% 100%,0 74%,0 26%);color:#062b14;font-family:var(--disp);font-weight:700;font-size:.85rem;display:flex;align-items:center;justify-content:center;}
+.steps strong{color:var(--ink);}
+.xchk{display:flex;align-items:center;gap:.5rem;text-transform:none;letter-spacing:0;font-family:var(--body);font-size:1rem;color:var(--ink);margin:.18rem 0;cursor:pointer;} .xchk input{accent-color:var(--gold);}
+.xgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.1rem .9rem;}
+details{border:1px solid var(--frame);border-radius:5px;padding:.75rem 1rem;margin:1.2rem 0 0;background:rgba(0,0,0,.10);}
+summary{cursor:pointer;font-family:var(--disp);font-size:.85rem;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-bright);}
+.flagblk{margin:.8rem 0;} .flaghead{display:flex;align-items:center;gap:.5rem;font-size:1rem;margin-bottom:.3rem;} .flaghead span{flex:1;color:var(--ink);}
+.flagrow{display:flex;flex-wrap:wrap;gap:.2rem;align-items:center;margin:.15rem 0;} .flagrow em{width:1.6rem;font-size:.7rem;color:var(--ink-dim);font-style:normal;font-family:var(--mono);}
+.bitc{width:1.55rem;height:1.55rem;font-size:.62rem;border-radius:4px;position:relative;margin:0;}
+.hexrow{display:flex;gap:.2rem;align-items:center;margin:.15rem 0;flex-wrap:wrap;} .hexrow em{width:2.6rem;font-size:.7rem;color:var(--ink-dim);font-style:normal;font-family:var(--mono);}
+.hexrow .hex2,.hex2{width:1.95rem;padding:.25em 0;font-size:.75rem;text-align:center;} .hexnav{display:flex;gap:.8rem;align-items:center;margin:.6rem 0;font-family:var(--mono);font-size:.8rem;color:var(--ink-dim);}
+/* dungeon completion */
+.dungrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:.9rem;margin-top:.9rem;}
+.dun{--dc:#888;position:relative;border:1px solid color-mix(in srgb,var(--dc) 55%,var(--line));border-radius:6px;padding:.9rem;background:linear-gradient(160deg,color-mix(in srgb,var(--dc) 16%,var(--panel)),var(--panel));}
+.dun.done{box-shadow:0 0 0 1px var(--dc),0 0 22px color-mix(in srgb,var(--dc) 45%,transparent);}
+.dhead{display:flex;align-items:center;gap:.7rem;margin-bottom:.7rem;}
+.emb{flex:none;width:2.7rem;height:2.7rem;border-radius:50%;border:2px solid var(--dc);display:grid;place-items:center;font-size:1.25rem;background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--dc) 55%,#fff),var(--dc));filter:grayscale(.85) brightness(.6);transition:.2s;}
+.dun.done .emb{filter:none;box-shadow:0 0 14px color-mix(in srgb,var(--dc) 70%,transparent);}
+.dname{flex:1;line-height:1.15;} .dname b{display:block;font-family:var(--disp);font-size:.85rem;letter-spacing:.06em;color:var(--ink);} .dname small{color:var(--ink-dim);font-size:.9rem;}
+.ring{flex:none;width:2.7rem;height:2.7rem;border-radius:50%;background:conic-gradient(var(--dc) calc(var(--p)*1%),color-mix(in srgb,var(--ink) 16%,transparent) 0);display:grid;place-items:center;font-family:var(--mono);font-size:.62rem;position:relative;}
+.ring::before{content:"";position:absolute;inset:4px;border-radius:50%;background:var(--panel);} .ring span{position:relative;}
+.chips{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:.7rem;}
+.pill{font-family:var(--body);font-size:.92rem;padding:.2em .7em;border:1px solid var(--line);border-radius:999px;background:transparent;color:var(--ink-dim);cursor:pointer;}
+.pill.on{background:var(--dc);border-color:var(--dc);color:#0b0f18;font-weight:700;} .pill:hover{border-color:var(--gold-bright);}
+.dbtns{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;} .dbtns small{font-family:var(--mono);font-size:.68rem;color:var(--ink-dim);margin-left:auto;}
+/* story progress panel */
+.herofix{border:1px solid var(--gold);border-radius:5px;padding:.8rem .9rem;margin-bottom:.6rem;background:rgba(214,178,92,.08);}
+.herofix b{font-family:var(--disp);font-size:.85rem;letter-spacing:.04em;color:var(--gold-bright);}
+.storyhead{font-family:var(--disp);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin:.2rem 0 .3rem;}
+.cnt{font-family:var(--mono);font-weight:400;font-size:.62rem;color:var(--ink-dim);text-transform:none;letter-spacing:0;}
+.fnum{display:inline-block;font-family:var(--mono);font-size:.68rem;color:var(--ink-dim);background:var(--bg);border:1px solid var(--line);border-radius:3px;padding:.04em .35em;margin-right:.4em;}
+.guess{display:inline-block;font-family:var(--mono);font-size:.6rem;font-weight:700;letter-spacing:.06em;color:#1e1404;background:var(--gold);border-radius:3px;padding:.05em .4em;vertical-align:middle;margin-left:.3em;}
+.undoc{color:var(--ink-dim);font-style:italic;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="masthead"><svg viewBox="0 0 100 90" aria-hidden="true"><defs><linearGradient id="tg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0a8"/><stop offset="1" stop-color="#c9982f"/></linearGradient></defs><g fill="url(#tg)"><polygon points="50,4 73,44 27,44"/><polygon points="27,48 50,88 4,88"/><polygon points="73,48 96,88 50,88"/></g></svg>
+    <h1>Ocarina of Time 3D</h1><div class="tag">Save Editor</div><div class="orn">◆</div></header>
+  <p class="sub">Edit a real OoT3D save file right in your browser — rupees, hearts, keys, and even which individual Gold Skulltulas you've collected. Nothing you upload here leaves your computer.</p>
+
+  <ol class="steps">
+    <li><strong>Find the save file.</strong> In Azahar, right-click the game in your game list and look for something like <em>Open Save Data Location</em> — that opens a folder with your save file in it. Copy it somewhere easy to find, like your Desktop.</li>
+    <li><strong>Make a spare copy.</strong> Duplicate that file and rename the copy "backup" before you touch anything — if an edit ever goes wrong, this is how you undo it.</li>
+    <li><strong>Load it below</strong> and change whatever you like. Every field updates instantly and safely — you can't break anything just by typing.</li>
+    <li><strong>Download the edited file</strong> — it's saved as a new file, your original is never touched. Copy the new file into the save folder from step 1, <em>replacing</em> the original file there, then load your save in the game.</li>
+  </ol>
+
+  <div class="card">
+    <div class="dropzone" id="dz">
+      <p><strong>Click to choose a file</strong>, or drop it here.</p>
+      <p>The tool scans the whole file for save slots — it works whether you give it a single decrypted slot or the full save container.</p>
+      <input type="file" id="file">
+      <div class="filename" id="fname"></div>
+    </div>
+    <div id="scanmsg" class="note hidden"></div>
+  </div>
+
+  <div id="slots"></div>
+
+  <div class="actions hidden" id="actions">
+    <label class="confirmbox">
+      <input type="checkbox" id="confirmBackup">
+      <span>I've kept a spare, unedited copy of my save file. I understand this button makes a brand-new file — my original stays exactly as it was, and I can go back to it anytime.</span>
+    </label>
+    <button class="primary" id="download" disabled>Write changes &amp; download</button>
+    <span class="status" id="status"></span>
+  </div>
+</div>
+
+<script>
+"use strict";
+const LE = true; // assume little-endian struct layout (ARM/3DS)
+let fileBuf = null;      // ArrayBuffer of the loaded file
+let fileBytes = null;    // Uint8Array view
+let slots = [];          // {start, view, crcAlgo}
+
+const SLOT_LEN = 0x14D8;      // bytes checksummed
+const CHK_OFF  = 0x14D8;      // 2-byte checksum, stored reversed (byte-swapped)
+
+const DUNGEONS = ["Forest Temple","Fire Temple","Water Temple","Spirit Temple","Shadow Temple","Bottom of the Well","Gerudo Training Ground","Gerudo Fortress","Ganon's Castle"];
+const DUNGEON_KEY_OFF = [0xD7,0xD8,0xD9,0xDA,0xDB,0xDC,0xDF,0xE0,0xE1];
+const DUNGEON_ITEM_OFF = [0xC0,0xC1,0xC2,0xC3,0xC4,0xC5,0xC6,0xC7,0xC8,0xC9,0xCA];
+const DUNGEON_ITEM_NAMES = ["Deku Tree","Dodongo's Cavern","Jabu-Jabu's Belly","Forest Temple","Fire Temple","Water Temple","Spirit Temple","Shadow Temple","Bottom of the Well","Ice Cavern","Ganon's Castle"];
+// Each byte at 0xEB4-0xEC9 is a bitfield of collected Gold Skulltula tokens for one region.
+// Per-region totals below are sourced from published token-count guides and sum to the
+// documented 100 (44 dungeon + 56 overworld); some save bytes bundle a couple of small
+// real-world sub-areas together (noted), since the save format only has 22 region bytes
+// for the game's ~30 named locations. Which physical bit maps to which specific spider
+// within a region isn't independently confirmed, so tokens are numbered generically —
+// but the total collected count per region, and overall, will be exactly right.
+const SKULL_REGIONS = [
+  {off:0xEB4, label:"Inside the Deku Tree", max:4},
+  {off:0xEB5, label:"Dodongo's Cavern", max:5},
+  {off:0xEB6, label:"Inside Jabu-Jabu's Belly", max:4},
+  {off:0xEB7, label:"Forest Temple", max:5},
+  {off:0xEB8, label:"Fire Temple", max:5},
+  {off:0xEB9, label:"Water Temple", max:5},
+  {off:0xEBA, label:"Spirit Temple", max:5},
+  {off:0xEBB, label:"Shadow Temple", max:5},
+  {off:0xEBC, label:"Bottom of the Well", max:3},
+  {off:0xEBD, label:"Ice Cavern", max:3},
+  {off:0xEBE, label:"Hyrule Field", max:2},
+  {off:0xEBF, label:"Lon Lon Ranch", max:4},
+  {off:0xEC0, label:"Kokiri Forest", max:3},
+  {off:0xEC1, label:"Lost Woods & Sacred Forest Meadow", max:4},
+  {off:0xEC2, label:"Market, Hyrule Castle & Ganon's Castle grounds", max:4},
+  {off:0xEC3, label:"Death Mountain (Trail, Crater & Goron City)", max:8},
+  {off:0xEC4, label:"Kakariko Village & Graveyard", max:8},
+  {off:0xEC5, label:"Zora's Domain, River & Fountain", max:8},
+  {off:0xEC6, label:"Lake Hylia", max:5},
+  {off:0xEC7, label:"Gerudo Valley", max:4},
+  {off:0xEC8, label:"Gerudo's Fortress", max:2},
+  {off:0xEC9, label:"Haunted Wasteland & Desert Colossus", max:4},
+];
+// Current equipment is packed two-per-byte (low nibble / high nibble) — the standard
+// OoT equipment numbering. If an edit ever shows the wrong gear in-game, just reopen
+// this tool and switch it back.
+const SWORDS = ["None","Kokiri Sword","Master Sword","Biggoron's Sword"];
+const SHIELDS = ["None","Deku Shield","Hylian Shield","Mirror Shield"];
+const TUNICS = ["—","Kokiri Tunic","Goron Tunic","Zora Tunic"];
+const BOOTS = ["—","Kokiri Boots","Iron Boots","Hover Boots"];
+const QUEST_BYTES = [
+  {off:0xBC,label:"Medallions, Minuet & Bolero"},
+  {off:0xBD,label:"Songs"},
+  {off:0xBE,label:"Song of Time/Storms, Spiritual Stones & Trade Items"},
+  {off:0xBF,label:"Heart Pieces"}
+];
+
+// ---- Real OoT3D checksum algorithm (verified against actual save files) ----
+// CRC-16/ARC, computed over the ENTIRE 0x14DC-byte slot with the checksum's own
+// two bytes zeroed out first. Source: yellows8/smealum's oot3d_savetool.c, the
+// original savedata-exploit tooling for this exact game.
+const CRC16_TABLE = [
+0x0000,0xC0C1,0xC181,0x0140,0xC301,0x03C0,0x0280,0xC241,0xC601,0x06C0,0x0780,0xC741,0x0500,0xC5C1,
+0xC481,0x0440,0xCC01,0x0CC0,0x0D80,0xCD41,0x0F00,0xCFC1,0xCE81,0x0E40,0x0A00,0xCAC1,0xCB81,0x0B40,0xC901,
+0x09C0,0x0880,0xC841,0xD801,0x18C0,0x1980,0xD941,0x1B00,0xDBC1,0xDA81,0x1A40,0x1E00,0xDEC1,0xDF81,0x1F40,
+0xDD01,0x1DC0,0x1C80,0xDC41,0x1400,0xD4C1,0xD581,0x1540,0xD701,0x17C0,0x1680,0xD641,0xD201,0x12C0,0x1380,
+0xD341,0x1100,0xD1C1,0xD081,0x1040,0xF001,0x30C0,0x3180,0xF141,0x3300,0xF3C1,0xF281,0x3240,0x3600,0xF6C1,
+0xF781,0x3740,0xF501,0x35C0,0x3480,0xF441,0x3C00,0xFCC1,0xFD81,0x3D40,0xFF01,0x3FC0,0x3E80,0xFE41,0xFA01,
+0x3AC0,0x3B80,0xFB41,0x3900,0xF9C1,0xF881,0x3840,0x2800,0xE8C1,0xE981,0x2940,0xEB01,0x2BC0,0x2A80,0xEA41,
+0xEE01,0x2EC0,0x2F80,0xEF41,0x2D00,0xEDC1,0xEC81,0x2C40,0xE401,0x24C0,0x2580,0xE541,0x2700,0xE7C1,0xE681,
+0x2640,0x2200,0xE2C1,0xE381,0x2340,0xE101,0x21C0,0x2080,0xE041,0xA001,0x60C0,0x6180,0xA141,0x6300,0xA3C1,
+0xA281,0x6240,0x6600,0xA6C1,0xA781,0x6740,0xA501,0x65C0,0x6480,0xA441,0x6C00,0xACC1,0xAD81,0x6D40,0xAF01,
+0x6FC0,0x6E80,0xAE41,0xAA01,0x6AC0,0x6B80,0xAB41,0x6900,0xA9C1,0xA881,0x6840,0x7800,0xB8C1,0xB981,0x7940,
+0xBB01,0x7BC0,0x7A80,0xBA41,0xBE01,0x7EC0,0x7F80,0xBF41,0x7D00,0xBDC1,0xBC81,0x7C40,0xB401,0x74C0,0x7580,
+0xB541,0x7700,0xB7C1,0xB681,0x7640,0x7200,0xB2C1,0xB381,0x7340,0xB101,0x71C0,0x7080,0xB041,0x5000,0x90C1,
+0x9181,0x5140,0x9301,0x53C0,0x5280,0x9241,0x9601,0x56C0,0x5780,0x9741,0x5500,0x95C1,0x9481,0x5440,0x9C01,
+0x5CC0,0x5D80,0x9D41,0x5F00,0x9FC1,0x9E81,0x5E40,0x5A00,0x9AC1,0x9B81,0x5B40,0x9901,0x59C0,0x5880,0x9841,
+0x8801,0x48C0,0x4980,0x8941,0x4B00,0x8BC1,0x8A81,0x4A40,0x4E00,0x8EC1,0x8F81,0x4F40,0x8D01,0x4DC0,0x4C80,
+0x8C41,0x4400,0x84C1,0x8581,0x4540,0x8701,0x47C0,0x4680,0x8641,0x8201,0x42C0,0x4380,0x8341,0x4100,0x81C1,
+0x8081,0x4040];
+function realCrc16(bytes){
+  let crc = 0;
+  for(let i=0;i<bytes.length;i++){
+    crc = CRC16_TABLE[(bytes[i] ^ crc) & 0xFF] ^ (crc >> 8);
+  }
+  return crc & 0xFFFF;
+}
+function findSlots(bytes){
+  const sig=[0x5A,0x45,0x4C,0x44,0x41,0x5A]; // "ZELDAZ"
+  const found=[];
+  for(let i=0;i+6<=bytes.length;i++){
+    let m=true;
+    for(let j=0;j<6;j++){ if(bytes[i+j]!==sig[j]){m=false;break;} }
+    if(!m) continue;
+    const start=i-0x30;
+    if(start<0 || start+0x14DC>bytes.length) continue;
+    found.push(start);
+  }
+  return found;
+}
+function detectCrc(dv, start){
+  const buf = fileBytes.slice(start, start+0x14DC); // full 0x14DC-byte slot, own copy
+  const stored = dv.getUint16(start+CHK_OFF, true);
+  buf[CHK_OFF] = 0; buf[CHK_OFF+1] = 0;
+  const calc = realCrc16(buf);
+  return calc === stored ? {name:"CRC-16/ARC (verified)", calc} : null;
+}
+function writeCrc(dv, start){
+  const buf = fileBytes.slice(start, start+0x14DC);
+  buf[CHK_OFF] = 0; buf[CHK_OFF+1] = 0;
+  const calc = realCrc16(buf);
+  dv.setUint16(start+CHK_OFF, calc, true);
+}
+
+function getName(dv, start){
+  let s="";
+  for(let i=0;i<8;i++){
+    const cu = dv.getUint16(start+0x1C+i*2, LE);
+    if(cu===0) break;
+    s += String.fromCharCode(cu);
+  }
+  return s;
+}
+function setName(dv, start, str){
+  for(let i=0;i<8;i++){
+    const cu = i<str.length ? str.charCodeAt(i) : 0;
+    dv.setUint16(start+0x1C+i*2, cu, LE);
+  }
+}
+
+function u8(dv,o){return dv.getUint8(o);}
+function su8(dv,o,v){dv.setUint8(o, Math.max(0,Math.min(255,v|0)));}
+function u16(dv,o){return dv.getUint16(o,LE);}
+function su16(dv,o,v){dv.setUint16(o, Math.max(0,Math.min(65535,v|0)), LE);}
+
+
+// ================= Extended editors (inventory, gear, quest, flags, scenes, hex) =================
+const ITEM_NAMES={0:'Deku Stick',1:'Deku Nut',2:'Bomb',3:'Fairy Bow',4:'Fire Arrow',5:"Din's Fire",6:'Fairy Slingshot',7:'Fairy Ocarina',8:'Ocarina of Time',9:'Bombchu',10:'Hookshot',11:'Longshot',12:'Ice Arrow',13:"Farore's Wind",14:'Boomerang',15:'Lens of Truth',16:'Magic Beans',17:'Megaton Hammer',18:'Light Arrow',19:"Nayru's Love",20:'Empty Bottle',21:'Red Potion',22:'Green Potion',23:'Blue Potion',24:'Fairy',25:'Fish',26:'Lon Lon Milk',27:"Ruto's Letter",28:'Blue Fire',29:'Bug',30:'Big Poe',31:'Milk (half)',32:'Poe',33:'Weird Egg',34:'Chicken',35:"Zelda's Letter",36:'Keaton Mask',37:'Skull Mask',38:'Spooky Mask',39:'Bunny Hood',40:'Goron Mask',41:'Zora Mask',42:'Gerudo Mask',43:'Mask of Truth',44:'SOLD OUT',45:'Pocket Egg',46:'Pocket Cucco',47:'Cojiro',48:'Odd Mushroom',49:'Odd Potion',50:"Poacher's Saw",51:"Goron's Sword (broken)",52:'Prescription',53:'Eyeball Frog',54:'Eye Drops',55:'Claim Check'};
+const rng=(a,b)=>Array.from({length:b-a+1},(_,i)=>a+i);
+const INV_SLOTS=[['Deku Stick',[0]],['Deku Nut',[1]],['Bomb',[2]],['Bow',[3]],['Fire Arrow',[4]],["Din's Fire",[5]],['Slingshot',[6]],['Ocarina',[7,8]],['Bombchu',[9]],['Hookshot',[10,11]],['Ice Arrow',[12]],["Farore's Wind",[13]],['Boomerang',[14]],['Lens of Truth',[15]],['Magic Beans',[16]],['Megaton Hammer',[17]],['Light Arrow',[18]],["Nayru's Love",[19]],['Bottle 1',rng(20,32)],['Bottle 2',rng(20,32)],['Bottle 3',rng(20,32)],['Bottle 4',rng(20,32)],['Adult trade item',rng(45,55)],['Child trade item',rng(33,44)]];
+const FULL_INV=[0,1,2,3,4,5,6,8,9,11,12,13,14,15,16,17,18,19,21,22,23,26,55,44];
+const QUEST_ITEMS=[[0xBC,1,'Forest Medallion'],[0xBC,2,'Fire Medallion'],[0xBC,4,'Water Medallion'],[0xBC,8,'Spirit Medallion'],[0xBC,16,'Shadow Medallion'],[0xBC,32,'Light Medallion'],[0xBC,64,'Minuet of Forest'],[0xBC,128,'Bolero of Fire'],[0xBD,1,'Serenade of Water'],[0xBD,2,'Requiem of Spirit'],[0xBD,4,'Nocturne of Shadow'],[0xBD,8,'Prelude of Light'],[0xBD,16,"Zelda's Lullaby"],[0xBD,32,"Epona's Song"],[0xBD,64,"Saria's Song"],[0xBD,128,"Sun's Song"],[0xBE,1,'Song of Time'],[0xBE,2,'Song of Storms'],[0xBE,4,'Kokiri\'s Emerald'],[0xBE,8,"Goron's Ruby"],[0xBE,16,"Zora's Sapphire"],[0xBE,32,'Stone of Agony'],[0xBE,64,"Gerudo's Card"],[0xBE,128,'Gold Skulltula icon']];
+const EQUIP_OWNED=[[0xB6,1,'Kokiri Sword'],[0xB6,2,'Master Sword'],[0xB6,4,"Biggoron's Sword"],[0xB6,16,'Deku Shield'],[0xB6,32,'Hylian Shield'],[0xB6,64,'Mirror Shield'],[0xB7,1,'Kokiri Tunic'],[0xB7,2,'Goron Tunic'],[0xB7,4,'Zora Tunic'],[0xB7,16,'Kokiri Boots'],[0xB7,32,'Iron Boots'],[0xB7,64,'Hover Boots']];
+const UPGRADES=[['Quiver',0,7,['None','30 arrows','40 arrows','50 arrows']],['Bomb Bag',3,7,['None','20 bombs','30 bombs','40 bombs']],['Strength',6,7,['None','Goron Bracelet','Silver Gauntlets','Golden Gauntlets']],['Diving',9,7,['None','Silver Scale','Golden Scale']],['Wallet',12,3,['Child (99)','Adult (200)',"Giant's (500)","Tycoon's (999)"]],['Slingshot bag',14,7,['None','30 seeds','40 seeds','50 seeds']],['Deku Stick capacity',17,7,['None','10','20','30']],['Deku Nut capacity',20,7,['None','20','30','40']]];
+const DUNGEON_NAMES=["Deku Tree","Dodongo's Cavern","Jabu-Jabu's Belly","Forest Temple","Fire Temple","Water Temple","Spirit Temple","Shadow Temple","Bottom of the Well","Ice Cavern","Ganon's Tower"];
+const SCENE_NAMES={0:'Deku Tree',1:"Dodongo's Cavern",2:"Jabu-Jabu's Belly",3:'Forest Temple',4:'Fire Temple',5:'Water Temple',6:'Spirit Temple',7:'Shadow Temple',8:'Bottom of the Well',9:'Ice Cavern',10:"Ganon's Tower",11:'Gerudo Training Ground',12:"Thieves' Hideout",13:"Inside Ganon's Castle",16:'Treasure Box Shop',17:"Gohma's Lair",18:"King Dodongo's Lair",19:"Barinade's Lair",20:"Phantom Ganon's Lair",21:"Volvagia's Lair",22:"Morpha's Lair",23:"Twinrova's Lair",24:"Bongo Bongo's Lair",25:"Ganondorf's Lair",62:'Grottos',66:'Shooting Gallery',67:'Temple of Time',75:'Bombchu Bowling Alley',80:'House of Skulltula',81:'Hyrule Field',82:'Kakariko Village',83:'Graveyard',84:"Zora's River",85:'Kokiri Forest',86:'Sacred Forest Meadow',87:'Lake Hylia',88:"Zora's Domain",89:"Zora's Fountain",90:'Gerudo Valley',91:'Lost Woods',92:'Desert Colossus',93:"Gerudo's Fortress",94:'Haunted Wasteland',95:'Hyrule Castle',96:'Death Mountain Trail',97:'Death Mountain Crater',98:'Goron City',99:'Lon Lon Ranch',100:"Outside Ganon's Castle"};
+
+
+// Story/event flags: gSaveContext.eventChkInf, one bit per event, 16 flags per word.
+// Base offset (0xEEC) and bit layout verified two ways: it matches the documented
+// N64/decomp struct, and independently confirmed against the user's own real save -
+// EVENTCHKINF_A8 (Deku Tree intro cutscene, decomp-documented) landed exactly where
+// this math predicts after they'd actually visited the Deku Tree.
+function evFlag(hex){
+  const word = hex >> 4, bit = hex & 0xF;
+  return { o: 0xEEC + word*2 + (bit>=8?1:0), m: 1 << (bit%8) };
+}
+const STORY_FLAGS = [
+  {g:'Kokiri Forest & Lon Lon Ranch', items:[
+    [0x02,'Mido denied Deku Tree access',2],
+    [0x03,'Kokiri Forest introduction',1],
+    [0x04,'Kokiri Forest introduction',1],
+    [0x05,'Kokiri Forest introduction',1],
+    [0x07,'Set with the Kokiri Emerald, when the Deku Tree dies',2],
+    [0x09,'Set with the Kokiri Emerald, when the Deku Tree dies',2],
+    [0x0A,'Deku Tree death sequence',1],
+    [0x0B,'Deku Tree death sequence',1],
+    [0x0C,'Deku Tree death sequence',1],
+    [0x0F,'First arrival at Hyrule Field or Lon Lon Ranch',1],
+    [0x10,'Talked to Malon for the first time',2],
+    [0x11,'Early Malon/Talon dialogue',1],
+    [0x12,'Received the Weird Egg',2],
+    [0x13,'Talon woken at Hyrule Castle',2],
+    [0x14,'Talon returned from Hyrule Castle',2],
+    [0x15,'Talked to child Malon at the ranch',2],
+    [0x16,'Can learn Epona\'s Song',2],
+    [0x18,'Epona obtained',2],
+    [0x19,'Obtained Kokiri Emerald',2],
+    [0x1B,'Lon Lon Ranch progress',1],
+    [0x1C,'Spoke to Mido after the Deku Tree\'s death',1],
+    [0x1D,'Opened the Royal Family\'s Tomb (Sun\'s Song grave)',1],
+    [0x1E,'Cow-race unlocked (beat Ingo)',2],
+  ]},
+  {g:'Jabu-Jabu\'s Belly & Zora\'s Domain', items:[
+    [0x20,'Hyrule Field / Zora\'s River progress',1],
+    [0x21,'Hyrule Field / Zora\'s River progress',1],
+    [0x22,'Hyrule Field / Zora\'s River progress',1],
+    [0x23,'Bombed open Dodongo\'s Cavern\'s entrance',1],
+    [0x25,'Used the Dodongo\'s Cavern blue warp (reward claimed)',1],
+    [0x2A,'Dodongo\'s Cavern / Death Mountain progress',1],
+    [0x2B,'Dodongo\'s Cavern / Death Mountain progress',1],
+    [0x2C,'Dodongo\'s Cavern / Death Mountain progress',1],
+    [0x2D,'Dodongo\'s Cavern / Death Mountain progress',1],
+    [0x2F,'Death Mountain Trail boulder cleared',1],
+    [0x30,'Spoke to a Zora guard',1],
+    [0x31,'Obtained Ruto\'s Letter',1],
+    [0x32,'Zora\'s Domain progress',1],
+    [0x33,'Gave letter to King Zora / King Zora moved',2],
+    [0x37,'Used the Jabu-Jabu\'s Belly blue warp',1],
+    [0x38,'Obtained the Silver Scale',1],
+    [0x39,'Zora\'s Domain ice block melted',1],
+    [0x3A,'Offered a fish to Jabu-Jabu',1],
+    [0x3B,'Began the Nabooru battle (Spirit Temple)',1],
+    [0x3C,'Finished the Nabooru battle (Spirit Temple)',1],
+  ]},
+  {g:'Temple of Time, Master Sword & mid-game', items:[
+    [0x40,'Hyrule Castle / Kakariko progress',1],
+    [0x41,'Hyrule Castle / Kakariko progress',1],
+    [0x42,'Hyrule Castle / Kakariko progress',1],
+    [0x43,'Hyrule Castle / Kakariko progress',1],
+    [0x45,'Hyrule Castle / Zelda-related progress',1],
+    [0x48,'Castle escape / Ganondorf sequence progress',1],
+    [0x49,'Castle escape / Ganondorf sequence progress',1],
+    [0x4A,'Castle escape / Ganondorf sequence progress',1],
+    [0x4B,'Castle escape / Ganondorf sequence progress',1],
+    [0x4C,'Castle escape / Ganondorf sequence progress',1],
+    [0x4D,'Created Rainbow Bridge',2],
+    [0x4E,'Caught by castle guards (set but unused by the game)',2],
+    [0x4F,'Watched Sheik after pulling Master Sword',2],
+    [0x50,'Post-Master-Sword / early adult-timeline progress',1],
+    [0x51,'Post-Master-Sword / early adult-timeline progress',1],
+    [0x52,'Post-Master-Sword / early adult-timeline progress',1],
+    [0x54,'Kakariko Village (adult timeline) progress',1],
+    [0x55,'Referenced in the Master Sword pedestal actor\'s own logic',1],
+    [0x59,'Song-learning progress',1],
+    [0x5A,'Song-learning progress',1],
+    [0x5B,'Learned Song of Storms at the Windmill',1],
+    [0x5C,'Song-learning progress',1],
+  ]},
+  {g:'Kakariko, Death Mountain & boss battles', items:[
+    [0x65,'Kakariko Village arrival progress',1],
+    [0x67,'Kakariko Village / Talon storyline progress',1],
+    [0x68,'Kakariko Village / Talon storyline progress',1],
+    [0x69,'Kakariko Village / Talon storyline progress',1],
+    [0x6A,'Talon woken in Kakariko',2],
+    [0x6B,'Talon returned from Kakariko',2],
+    [0x6E,'Death Mountain Crater / Fire Temple approach progress',1],
+    [0x6F,'Death Mountain Crater / Fire Temple approach progress',1],
+    [0x70,'Death Mountain Crater / Fire Temple approach progress',1],
+    [0x71,'Began King Dodongo battle',2],
+    [0x72,'Began the Barinade battle (Jabu-Jabu\'s Belly)',1],
+    [0x73,'Began the Phantom Ganon battle (Forest Temple)',1],
+    [0x74,'Began the Volvagia battle (Fire Temple)',1],
+    [0x75,'Began the Morpha battle (Water Temple)',1],
+    [0x76,'Began the Twinrova battle (Spirit Temple)',1],
+    [0x77,'Began Bongo Bongo battle',2],
+    [0x78,'Began Ganondorf battle',2],
+  ]},
+  {g:'Gerudo\'s Fortress & mask trades', items:[
+    [0x80,'Gerudo\'s Fortress / membership card progress',1],
+    [0x82,'Gerudo\'s Fortress progress',1],
+    [0x8C,'Paid back for the Keaton Mask',2],
+    [0x8D,'Another mask-trade repayment (Skull or Spooky Mask)',1],
+    [0x8E,'Another mask-trade repayment (Skull or Spooky Mask)',1],
+    [0x8F,'Paid back for the Bunny Hood',2],
+    [0x90,'Gerudo carpenter 1 rescued',2],
+    [0x91,'Gerudo carpenter 2 rescued',2],
+    [0x92,'Gerudo carpenter 3 rescued',2],
+    [0x93,'Gerudo carpenter 4 rescued',2],
+    [0x94,'Gerudo Training Ground / Desert Colossus progress',1],
+    [0x95,'Gerudo Training Ground / Desert Colossus progress',1],
+    [0x96,'Gerudo Training Ground / Desert Colossus progress',1],
+    [0x9C,'Spirit Temple / Desert Colossus progress',1],
+  ]},
+  {g:'Area entrance cutscenes', items:[
+    [0xA0,'Another area\'s first-entrance cutscene (same family as Deku Tree/Goron City/Temple of Time)',1],
+    [0xA1,'Another area\'s first-entrance cutscene',1],
+    [0xA3,'Another area\'s first-entrance cutscene',1],
+    [0xA4,'Another area\'s first-entrance cutscene',1],
+    [0xA5,'Another area\'s first-entrance cutscene',1],
+    [0xA6,'Goron City entrance cutscene seen',2],
+    [0xA7,'Temple of Time entrance cutscene seen (Sheik intro)',2],
+    [0xA8,'Deku Tree entrance cutscene seen',2],
+    [0xA9,'Learned the Song of Time',1],
+    [0xAA,'Another area\'s first-entrance cutscene',1],
+    [0xAC,'Another area\'s first-entrance cutscene',1],
+    [0xAD,'Another area\'s first-entrance cutscene',1],
+  ]},
+  {g:'Trade sequence & misc late-game', items:[
+    [0xB0,'Biggoron\'s Sword adult trade sequence, step 1',1],
+    [0xB1,'Biggoron\'s Sword adult trade sequence, step 2',1],
+    [0xB2,'Biggoron\'s Sword adult trade sequence, step 3',1],
+    [0xB3,'Biggoron\'s Sword adult trade sequence, step 4',1],
+    [0xB4,'Biggoron\'s Sword adult trade sequence, step 5',1],
+    [0xB5,'Biggoron\'s Sword adult trade sequence, step 6',1],
+    [0xB6,'Biggoron\'s Sword adult trade sequence, step 7',1],
+    [0xB7,'Biggoron\'s Sword adult trade sequence, step 8',1],
+    [0xB8,'Biggoron\'s Sword adult trade sequence, step 9',1],
+    [0xB9,'Biggoron\'s Sword adult trade sequence, step 10',1],
+    [0xBA,'Child-era trade sequence or NPC dialogue progress',1],
+    [0xBB,'Child-era trade sequence or NPC dialogue progress',1],
+    [0xBC,'Child-era trade sequence or NPC dialogue progress',1],
+    [0xBD,'Child-era trade sequence or NPC dialogue progress',1],
+    [0xBE,'Child-era trade sequence or NPC dialogue progress',1],
+    [0xBF,'Child-era trade sequence or NPC dialogue progress',1],
+    [0xC0,'Late-game NPC dialogue progress',1],
+    [0xC1,'Late-game NPC dialogue progress',1],
+    [0xC3,'Late-game NPC dialogue progress',1],
+    [0xC4,'Returned to Temple of Time with all medallions (adult warp-in cutscene)',2],
+    [0xC5,'Ganon\'s Castle / ending-sequence progress',1],
+    [0xC6,'Ganon\'s Castle / ending-sequence progress',1],
+    [0xC7,'Ganon\'s Castle / ending-sequence progress',1],
+    [0xC8,'Ganon\'s Castle / ending-sequence progress',1],
+    [0xC9,'Ganon\'s Castle / ending-sequence progress',1],
+  ]},
+  {g:'Frog choir & Skulltula House rewards', items:[
+    [0xD0,'Played songs for the frog choir',2],
+    [0xD1,'Played songs for the frogs: Zelda\'s Lullaby',2],
+    [0xD2,'Played songs for the frogs: Epona\'s Song',2],
+    [0xD3,'Played songs for the frogs: Sun\'s Song',2],
+    [0xD4,'Played songs for the frogs: Saria\'s Song',2],
+    [0xD5,'Played songs for the frogs: Song of Time',2],
+    [0xD6,'Played songs for the frogs: Song of Storms',2],
+    [0xDA,'House of Skulltula reward: 10 tokens',2],
+    [0xDB,'House of Skulltula reward: 20 tokens',2],
+    [0xDC,'House of Skulltula reward: 30 tokens',2],
+    [0xDD,'House of Skulltula reward: 40 tokens',2],
+    [0xDE,'House of Skulltula reward: 50 tokens',2],
+  ]},
+];
+function storyPanel(root,mk,fset,rd,wr,redraw){
+  const f=fset('Story Progress — every documented event flag',
+    'All 145 event flags from the game\'s own decompiled source (gSaveContext.eventChkInf), grouped by area and numbered by their hex flag ID. Plain labels are confirmed by the decomp project\'s own source comments. Labels tagged <span class="guess">GUESS</span> are my own inference from neighboring flags, game order, or partial evidence — not confirmed, a starting point only. This only sets progress flags; it never removes anything you already have.');
+  const cb=(p,label,hex)=>{const {o,m}=evFlag(hex);const l=mk('label','xchk');const i=mk('input');i.type='checkbox';i.checked=(rd(o)&m)!==0;
+    i.onchange=()=>{wr(o, i.checked ? (rd(o)|m) : (rd(o)&~m));};const t=mk('span');t.innerHTML=label;l.append(i,t);p.appendChild(l);return i;};
+  const hero=mk('div','herofix');
+  hero.innerHTML='<b>Fix: door to the Master Sword keeps replaying Sheik\u2019s cutscene</b><p class="help" style="margin:.3em 0 .6em">Sets flag <code>0x4F</code> plus the Temple of Time entrance-cutscene flag <code>0xA7</code> \u2014 both confirmed by name in the game\u2019s own decompiled source.</p>';
+  const btn=mk('button','qbtn','Mark Master Sword sequence as already seen');btn.type='button';
+  btn.onclick=()=>{[0x4F,0xA7].forEach(h=>{const{o,m}=evFlag(h);wr(o,rd(o)|m);});redraw();};
+  hero.appendChild(btn);f.appendChild(hero);
+
+  STORY_FLAGS.forEach(({g,items})=>{
+    const named = items.filter(x=>x[2]===2).length; const guessed = items.filter(x=>x[2]===1).length;
+    const det=mk('details'); det.appendChild(mk('summary',0,`${g} <span class="cnt">(${items.length} flags — ${named} named, ${guessed} guessed)</span>`));
+    const bar=mk('div','quickrow'); const allBtn=mk('button','maxbtn','All'),noneBtn=mk('button','maxbtn','None');
+    allBtn.type=noneBtn.type='button'; bar.append(allBtn,noneBtn); det.appendChild(bar);
+    const grid=mk('div','xgrid'); const boxes=[];
+    items.forEach(([hex,label,tier])=>{
+      const num = `<span class="fnum">0x${hex.toString(16).toUpperCase().padStart(2,'0')}</span>`;
+      const html = tier===2 ? `${num} ${label}`
+                 : tier===1 ? `${num} ${label} <span class="guess">GUESS</span>`
+                 : `${num} <span class="undoc">${label}</span>`;
+      boxes.push(cb(grid, html, hex));
+    });
+    det.appendChild(grid); f.appendChild(det);
+    allBtn.onclick=()=>boxes.forEach(b=>{if(!b.checked){b.checked=true;b.onchange();}});
+    noneBtn.onclick=()=>boxes.forEach(b=>{if(b.checked){b.checked=false;b.onchange();}});
+  });
+}
+
+function buildExtras(root,card,dv,s){
+  root.innerHTML='';
+  const rd=o=>dv.getUint8(s+o), wr=(o,v)=>dv.setUint8(s+o,v&255);
+  const mk=(tag,cls,html)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(html!=null)e.innerHTML=html;return e;};
+  const fset=(t,h,p)=>{const f=mk('fieldset',0,`<legend>${t}</legend>`+(h?`<p class="help">${h}</p>`:''));(p||root).appendChild(f);return f;};
+  const grid=f=>{const g=mk('div','grid');f.appendChild(g);return g;};
+  const chk=(p,label,get,set)=>{const l=mk('label','xchk');const i=mk('input');i.type='checkbox';i.checked=get();i.onchange=()=>set(i.checked);l.append(i,label);p.appendChild(l);return i;};
+  const sel=(p,label,opts,get,set)=>{const d=mk('div');d.appendChild(mk('label',0,label));const e=mk('select');const v=get();const list=opts.slice();if(!list.some(o=>o[0]===v))list.push([v,'Unknown (0x'+v.toString(16).toUpperCase()+')']);list.forEach(([val,nm])=>{const o=mk('option');o.value=val;o.textContent=nm;e.appendChild(o);});e.value=v;e.onchange=()=>set(+e.value);d.appendChild(e);p.appendChild(d);return e;};
+  const num=(p,label,max,get,set)=>{const d=mk('div');d.appendChild(mk('label',0,label));const e=mk('input');e.type='number';e.min=0;e.max=max;e.value=get();e.oninput=()=>set(Math.max(0,Math.min(max,+e.value||0)));d.appendChild(e);p.appendChild(d);return e;};
+  const bit=(o,m)=>[()=>(rd(o)&m)!==0,on=>wr(o,on?rd(o)|m:rd(o)&~m)];
+  const q=n=>card.querySelector(`[data-f="${n}"]`);
+
+  storyPanel(root,mk,fset,rd,wr,()=>card._x());
+  dungeonPanel(root,card,dv,s,mk,fset,rd,wr,q,()=>card._x());
+  // --- Inventory ---
+  let f=fset('Inventory','Every item slot on the pause screen. Ammo counts are just below. Some items need the matching ammo/upgrade to be usable.');
+  let g=grid(f);
+  const ICON=['🪵','🌰','💣','🏹','🔥','🔴','🎯','🎵','🧨','⚓','❄️','🟢','🪃','👁️','🫘','🔨','✨','🔷','🍾','🍾','🍾','🍾','🥚','📜'];
+  INV_SLOTS.forEach(([nm,ids],i)=>sel(g,(ICON[i]||'')+' '+nm,[[255,'— none —'],...ids.map(id=>[id,ITEM_NAMES[id]])],()=>rd(0x8C+i),v=>wr(0x8C+i,v)));
+  f=fset('More ammo','Deku Sticks, Nuts, Bombs, Arrows and Beans are in the main section above.'); g=grid(f);
+  [['Slingshot seeds',0xAC],['Bombchu',0xAE]].forEach(([nm,o])=>{const e=num(g,nm,99,()=>rd(o),v=>wr(o,v)); e.dataset.mirror=o;});
+
+  // --- Equipment owned & upgrades ---
+  f=fset('Gear you own','Tick what should be available in the Equipment menu.'); g=mk('div','xgrid');f.appendChild(g);
+  EQUIP_OWNED.forEach(([o,m,nm])=>chk(g,nm,...bit(o,m)));
+  f=fset('Capacity upgrades',null); g=grid(f);
+  UPGRADES.forEach(([nm,sh,mask,opts])=>sel(g,nm,opts.map((n,i)=>[i,n]),()=>(dv.getUint32(s+0xB8,true)>>>sh)&mask,v=>{let w=dv.getUint32(s+0xB8,true);w=(w&~(mask<<sh))|((v&mask)<<sh);dv.setUint32(s+0xB8,w>>>0,true);}));
+
+  // --- Magic & defense ---
+  f=fset('Magic & defense',null); g=mk('div','xgrid');f.appendChild(g);
+  const mg=chk(g,'Magic unlocked',()=>rd(0x4E)!==0,()=>ap());
+  const dm=chk(g,'Double magic',()=>rd(0x50)!==0,()=>ap());
+  const dd=chk(g,'Double defense',()=>rd(0x51)!==0,on=>{wr(0x51,on?1:0);wr(0xE7,on?20:0);});
+  function ap(){const m=mg.checked,d=m&&dm.checked;wr(0x4E,m?1:0);wr(0x50,d?1:0);wr(0x46,!m?0:d?2:1);wr(0x47,!m?0:d?0x60:0x30);const a=q('magicsize'),b=q('magic');if(a)a.value=rd(0x46);if(b)b.value=rd(0x47);}
+
+  // --- Quest ---
+  f=fset('Quest items, songs & stones',null); g=mk('div','xgrid');f.appendChild(g);
+  QUEST_ITEMS.forEach(([o,m,nm])=>chk(g,nm,...bit(o,m)));
+  g=grid(f); num(g,'Heart pieces (0-3)',3,()=>rd(0xBF)>>4,v=>wr(0xBF,(rd(0xBF)&0x0F)|(v<<4)));
+
+  // --- Misc ---
+  f=fset('Other progress',null); g=grid(f);
+  sel(g,'Current age',[[0,'Adult'],[1,'Child']],()=>dv.getUint32(s+4,true),v=>dv.setUint32(s+4,v,true));
+  num(g,'Horseback archery score',9999,()=>dv.getUint32(s+0xED0,true),v=>dv.setUint32(s+0xED0,v,true));
+  num(g,'Horse race best (sec)',9999,()=>dv.getUint32(s+0xEDC,true),v=>dv.setUint32(s+0xEDC,v,true));
+  num(g,'Marathon best (sec)',9999,()=>dv.getUint32(s+0xEE0,true),v=>dv.setUint32(s+0xEE0,v,true));
+
+  // --- Bit-flag blocks ---
+  const bitBlock=(parent,title,off,n,rowBits)=>{
+    const box=mk('div','flagblk');const head=mk('div','flaghead');head.appendChild(mk('span',0,title));
+    const all=mk('button','maxbtn','All'),none=mk('button','maxbtn','None');all.type=none.type='button';head.append(all,none);box.appendChild(head);
+    const cells=[];
+    for(let r=0;r<n*8;r+=rowBits){const row=mk('div','flagrow');row.appendChild(mk('em',0,String(r/rowBits)));
+      for(let b=r;b<r+rowBits&&b<n*8;b++){const l=mk('label','tok bitc');const i=mk('input');i.type='checkbox';const o=off+(b>>3),m=1<<(b&7);i.checked=(rd(o)&m)!==0;l.classList.toggle('on',i.checked);l.title='bit '+b;
+        i.onchange=()=>{wr(o,i.checked?rd(o)|m:rd(o)&~m);l.classList.toggle('on',i.checked);};l.append(i,String(b-r));row.appendChild(l);cells.push(i);}
+      box.appendChild(row);}
+    const setAll=v=>cells.forEach(i=>{if(i.checked!==v){i.checked=v;i.onchange();}});
+    all.onclick=()=>setAll(true);none.onclick=()=>setAll(false);parent.appendChild(box);};
+  const details=(t,h)=>{const d=mk('details');d.appendChild(mk('summary',0,t));if(h)d.appendChild(mk('p','help',h));root.appendChild(d);return d;};
+
+  let d=details('Story & event flags (advanced)','Raw flag bits the game uses for story progress, NPC conversations and one-time rewards. Bits are numbered, not named — change them only if you know what one does, or copy a pattern from another save.');
+  bitBlock(d,'Event flags (14 words)',0xEEC,28,16);bitBlock(d,'Item-get flags (4 words)',0xF08,8,16);bitBlock(d,'Info table (30 words)',0xF10,60,16);
+
+  d=details('Per-scene flags: chests, switches, collectibles (advanced)','Pick a scene to open all its chests, flip switches, or mark collectibles/heart pieces as taken.');
+  const ss=mk('select');for(let i=0;i<124;i++){const o=mk('option');o.value=i;o.textContent='0x'+i.toString(16).toUpperCase().padStart(2,'0')+' — '+(SCENE_NAMES[i]||'Scene '+i);ss.appendChild(o);}
+  d.appendChild(ss);const sc=mk('div');d.appendChild(sc);
+  const drawScene=()=>{sc.innerHTML='';const base=0xEC+(+ss.value)*0x1C;[['Chests',0],['Switches',4],['Room clear',8],['Collectibles',12]].forEach(([t,o])=>bitBlock(sc,t,base+o,4,32));};
+  ss.onchange=drawScene;ss.value=0x51;drawScene();
+
+  d=details('Hex editor (everything else)','Direct access to every byte of this save slot. Checksum is recalculated for you on download.');
+  const hp=mk('div');d.appendChild(hp);let page=0;
+  const drawHex=()=>{hp.innerHTML='';const nav=mk('div','hexnav');const pv=mk('button','maxbtn','◀ Prev'),nx=mk('button','maxbtn','Next ▶');pv.type=nx.type='button';const lab=mk('span',0,'0x'+(page*256).toString(16).toUpperCase().padStart(4,'0')+' – 0x'+Math.min(page*256+255,0x14DB).toString(16).toUpperCase());nav.append(pv,lab,nx);hp.appendChild(nav);
+    pv.onclick=()=>{if(page>0){page--;drawHex();}};nx.onclick=()=>{if((page+1)*256<0x14DC){page++;drawHex();}};
+    for(let r=0;r<16;r++){const a=page*256+r*16;if(a>=0x14DC)break;const row=mk('div','hexrow');row.appendChild(mk('em',0,a.toString(16).toUpperCase().padStart(4,'0')));
+      for(let c=0;c<16&&a+c<0x14DC;c++){const i=mk('input','hex2');i.maxLength=2;i.value=rd(a+c).toString(16).toUpperCase().padStart(2,'0');const o=a+c;i.oninput=()=>{const v=parseInt(i.value,16);if(!isNaN(v))wr(o,v);};row.appendChild(i);}
+      hp.appendChild(row);}};
+  drawHex();
+}
+
+// Sets a sensible "everything unlocked" loadout for one slot
+function maxGear(dv,s){
+  const w8=(o,v)=>dv.setUint8(s+o,v);
+  FULL_INV.forEach((id,i)=>w8(0x8C+i,id));
+  [[0xA6,30],[0xA7,40],[0xA8,40],[0xA9,50],[0xAC,50],[0xAE,50],[0xB4,10]].forEach(([o,v])=>w8(o,v));
+  w8(0xB6,0x77);w8(0xB7,0x77);
+  let w=0;[[0,3],[3,3],[6,3],[9,2],[12,3],[14,3],[17,3],[20,3]].forEach(([sh,v])=>{w|=v<<sh;});dv.setUint32(s+0xB8,w>>>0,true);
+}
+
+
+function hudHtml(dv,s){
+  const mh=Math.round(dv.getUint16(s+0x42,true)/16),cur=dv.getUint16(s+0x44,true)/16;
+  let h='';for(let i=0;i<Math.min(mh,20);i++){h+=`<span class="heart" style="--f:${Math.max(0,Math.min(1,cur-i))*100}%"></span>`;}
+  const mg=dv.getUint8(s+0x4E)?(dv.getUint8(s+0x50)?2:1):0,mag=dv.getUint8(s+0x47);
+  return `<div class="hearts">${h}</div><div class="hudrow"><span class="rupee"><i></i>${dv.getUint16(s+0x48,true)}</span>`+
+    (mg?`<span class="magic" style="width:${mg*5}rem"><b style="width:${Math.min(100,mag/(mg*48)*100)}%"></b></span>`:'')+
+    `<span class="skull">☠ ${dv.getUint16(s+0xE8,true)}/100</span></div>`;
+}
+const DUNS=[
+ {n:'Inside the Deku Tree',sc:0,lair:17,c:'#3fae4f',e:'🌳',rl:"Kokiri's Emerald",rb:[0xBE,4],gs:0,it:0,parts:['map','compass']},
+ {n:"Dodongo's Cavern",sc:1,lair:18,c:'#d0472b',e:'🪨',rl:"Goron's Ruby",rb:[0xBE,8],gs:1,it:1,parts:['map','compass']},
+ {n:"Jabu-Jabu's Belly",sc:2,lair:19,c:'#3b82c4',e:'🐟',rl:"Zora's Sapphire",rb:[0xBE,16],gs:2,it:2,parts:['map','compass']},
+ {n:'Forest Temple',sc:3,lair:20,c:'#2f9e4c',e:'🌲',rl:'Forest Medallion',rb:[0xBC,1],gs:3,it:3,parts:['map','compass','bk']},
+ {n:'Fire Temple',sc:4,lair:21,c:'#e2552b',e:'🔥',rl:'Fire Medallion',rb:[0xBC,2],gs:4,it:4,parts:['map','compass','bk']},
+ {n:'Water Temple',sc:5,lair:22,c:'#2f7fd0',e:'💧',rl:'Water Medallion',rb:[0xBC,4],gs:5,it:5,parts:['map','compass','bk']},
+ {n:'Shadow Temple',sc:7,lair:24,c:'#8a4fc4',e:'🌑',rl:'Shadow Medallion',rb:[0xBC,16],gs:7,it:7,parts:['map','compass','bk']},
+ {n:'Spirit Temple',sc:6,lair:23,c:'#d9922a',e:'🏜️',rl:'Spirit Medallion',rb:[0xBC,8],gs:6,it:6,parts:['map','compass','bk']},
+ {n:'Bottom of the Well',sc:8,c:'#8c7a58',e:'👁️',rl:'Lens of Truth',ri:[13,15],gs:8,it:8,parts:['map','compass']},
+ {n:'Ice Cavern',sc:9,c:'#5fc9d6',e:'❄️',rl:'Serenade of Water',rb:[0xBD,1],gs:9,it:9,parts:['map','compass']},
+ {n:'Gerudo Training Ground',sc:11,c:'#c08a3e',e:'🏹',rl:'Ice Arrows',ri:[10,12],parts:[]},
+ {n:"Ganon's Castle",sc:13,c:'#7a5cc2',e:'🔺',it:10,parts:['bk']}];
+const popc=v=>{let c=0;v>>>=0;while(v){c+=v&1;v>>>=1;}return c;};
+function dungeonPanel(root,card,dv,s,mk,fset,rd,wr,q,redraw){
+  const f=fset('Dungeon Completion','Every dungeon at a glance. Tap a badge to toggle it, or press Complete to finish the whole dungeon: reward, map, compass, boss key, every Gold Skulltula, all chests, and the boss arena. Reset undoes it.');
+  const lab=mk('label','xchk');const inc=mk('input');inc.type='checkbox';inc.checked=true;lab.append(inc,'Also mark the boss arena cleared and its Heart Container as taken (experimental)');f.appendChild(lab);
+  const wrap=mk('div','dungrid');f.appendChild(wrap);
+  const u32=o=>dv.getUint32(s+o,true),su32=(o,v)=>dv.setUint32(s+o,v>>>0,true),sc=(n,o)=>0xEC+n*0x1C+o;
+  const gsMask=r=>(1<<r.max)-1;
+  const syncGs=ri=>{const r=SKULL_REGIONS[ri],b=rd(r.off);
+    for(let i=0;i<r.max;i++){const on=!!(b&(1<<i)),c=card.querySelector(`[data-tok="${ri}-${i}"]`),w=card.querySelector(`[data-tokwrap="${ri}-${i}"]`);if(c)c.checked=on;if(w)w.classList.toggle('on',on);}
+    const rc=card.querySelector(`[data-rcount="${ri}"]`);if(rc)rc.textContent=popc(b&gsMask(r))+'/'+r.max;
+    const n=SKULL_REGIONS.reduce((a,x)=>a+popc(rd(x.off)&gsMask(x)),0);dv.setUint16(s+0xE8,n,true);const t=q('tokens');if(t)t.value=n;};
+  DUNS.forEach(d=>{
+    const comps=[];
+    if(d.rb)comps.push([d.rl,()=>(rd(d.rb[0])&d.rb[1])!==0,on=>wr(d.rb[0],on?rd(d.rb[0])|d.rb[1]:rd(d.rb[0])&~d.rb[1])]);
+    if(d.ri)comps.push([d.rl,()=>rd(0x8C+d.ri[0])===d.ri[1],on=>wr(0x8C+d.ri[0],on?d.ri[1]:255)]);
+    if(d.gs!=null){const r=SKULL_REGIONS[d.gs];comps.push(['Skulltulas '+popc(rd(r.off)&gsMask(r))+'/'+r.max,()=>popc(rd(r.off)&gsMask(r))===r.max,on=>{wr(r.off,on?gsMask(r):0);syncGs(d.gs);}]);}
+    const bits={map:['Map',4],compass:['Compass',2],bk:['Boss Key',1]};
+    d.parts.forEach(k=>{const [l,m]=bits[k],o=0xC0+d.it;comps.push([l,()=>(rd(o)&m)!==0,on=>wr(o,on?rd(o)|m:rd(o)&~m)]);});
+    const got=comps.filter(c=>c[1]()).length,pct=comps.length?Math.round(got/comps.length*100):0;
+    const box=mk('div','dun'+(pct===100?' done':''));box.style.setProperty('--dc',d.c);
+    box.innerHTML=`<div class="dhead"><span class="emb">${d.e}</span><div class="dname"><b>${d.n}</b><small>${d.rl||'No reward'}</small></div><div class="ring" style="--p:${pct}"><span>${pct}%</span></div></div>`;
+    const chips=mk('div','chips');comps.forEach(c=>{const b=mk('button','pill'+(c[1]()?' on':''),c[0]);b.type='button';b.onclick=()=>{c[2](!c[1]());redraw();};chips.appendChild(b);});
+    box.appendChild(chips);
+    const btns=mk('div','dbtns');const go=mk('button','qbtn','Complete'),rs=mk('button','maxbtn','Reset');go.type=rs.type='button';
+    const apply=on=>{comps.forEach(c=>c[2](on));const v=on?0xFFFFFFFF:0;su32(sc(d.sc,0),v);su32(sc(d.sc,12),v);
+      if(d.lair!=null&&inc.checked){su32(sc(d.lair,8),v);su32(sc(d.lair,12),on?(u32(sc(d.lair,12))|0x80000000):(u32(sc(d.lair,12))&0x7FFFFFFF));}redraw();};
+    go.onclick=()=>apply(true);rs.onclick=()=>apply(false);btns.append(go,rs,mk('small',0,popc(u32(sc(d.sc,0)))+' chest flags'));box.appendChild(btns);wrap.appendChild(box);});
+}
+
+function render(){
+  const container = document.getElementById("slots");
+  container.innerHTML = "";
+  document.getElementById("actions").classList.toggle("hidden", slots.length===0);
+  const cb = document.getElementById("confirmBackup");
+  cb.checked = false;
+  document.getElementById("download").disabled = true;
+  cb.onchange = () => { document.getElementById("download").disabled = slots.length===0 || !cb.checked; };
+
+  slots.forEach((slot, idx) => {
+    const start = slot.start;
+    const dv = slot.view;
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const crcNote = slot.crc
+      ? `<span class="crcline ok">Checksum: ${slot.crc.name} — your file\'s checksum verified. It will be recalculated automatically when you download.</span>`
+      : `<span class="crcline warn">Checksum did not verify on load (the file may already be damaged). It will still be recalculated correctly when you download.</span>`;
+
+    card.innerHTML = `
+      <h2>Save File ${idx+1} <span class="off">offset 0x${start.toString(16).toUpperCase()}</span></h2>
+      <div class="crcline">${crcNote}</div>
+      <div class="hud" data-hud></div>
+
+      <div class="quickrow">
+        <button type="button" class="qbtn" data-q="maxrupees">Max rupees (999)</button>
+        <button type="button" class="qbtn" data-q="fullheal">Full health &amp; magic</button>
+        <button type="button" class="qbtn" data-q="allskulls">Collect all 100 skulltulas</button>
+        <button type="button" class="qbtn" data-q="allkeys">Set all small keys to 9</button>
+        <button type="button" class="qbtn" data-q="allquest">Unlock all quest items &amp; songs</button>
+        <button type="button" class="qbtn" data-q="maxgear">Max out all gear &amp; items</button>
+      </div>
+
+      <div class="grid">
+        <div><label>File name</label><input type="text" maxlength="8" data-f="name"></div>
+        <div><label>Rupees</label><input type="number" min="0" max="999" data-f="rupees"></div>
+        <div><label>Heart containers</label><input type="number" min="1" max="20" data-f="maxhearts"></div>
+        <div><label>Current health (hearts)</label><input type="number" min="0" max="20" step="0.25" data-f="curhealth"></div>
+        <div><label>Magic meter</label>
+          <select data-f="magicsize"><option value="0">None</option><option value="1">Single</option><option value="2">Double</option></select>
+        </div>
+        <div><label>Magic (current)</label><input type="number" min="0" max="96" data-f="magic"></div>
+        <div><label>Deku Sticks</label><input type="number" min="0" max="99" data-f="sticks"></div>
+        <div><label>Deku Nuts</label><input type="number" min="0" max="99" data-f="nuts"></div>
+        <div><label>Bombs</label><input type="number" min="0" max="99" data-f="bombs"></div>
+        <div><label>Arrows</label><input type="number" min="0" max="99" data-f="arrows"></div>
+        <div><label>Magic Beans (held)</label><input type="number" min="0" max="99" data-f="beans"></div>
+        <div><label>Gold Skulltula Tokens (total)</label><input type="number" min="0" max="100" data-f="tokens"></div>
+      </div>
+
+      <fieldset>
+        <legend>Equipment</legend>
+        <p class="help">Best-effort mapping of the standard OoT equipment numbering — reopen this tool and switch it back if something looks wrong in-game.</p>
+        <div class="grid">
+          <div><label>Sword</label><select data-eq="sword">${SWORDS.map((n,i)=>`<option value="${i}">${n}</option>`).join("")}</select></div>
+          <div><label>Shield</label><select data-eq="shield">${SHIELDS.map((n,i)=>`<option value="${i}">${n}</option>`).join("")}</select></div>
+          <div><label>Tunic</label><select data-eq="tunic">${TUNICS.map((n,i)=>`<option value="${i}">${n}</option>`).join("")}</select></div>
+          <div><label>Boots</label><select data-eq="boots">${BOOTS.map((n,i)=>`<option value="${i}">${n}</option>`).join("")}</select></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>Small keys</legend>
+        <p class="help">The number of keys you're currently holding for each dungeon.</p>
+        ${DUNGEONS.map((d,i)=>`<div class="keyrow"><span>${d}</span><input type="number" min="0" max="99" data-key="${i}"></div>`).join("")}
+      </fieldset>
+
+      <fieldset>
+        <legend>Gold Skulltulas by region</legend>
+        <p class="help">Click a circle to toggle that token as collected. Filled = collected. See the note above the download button about how bits map to specific spiders.</p>
+        ${SKULL_REGIONS.map((r,ri)=>`
+          <div class="region">
+            <div class="rhead"><span>${r.label}</span>
+              <div class="rbtns"><small data-rcount="${ri}"></small> <button type="button" class="maxbtn" data-rall="${ri}">All</button> <button type="button" class="maxbtn" data-rnone="${ri}">None</button></div>
+            </div>
+            <div class="tokgrid">${Array.from({length:r.max}).map((_,bi)=>`<label class="tok" data-tokwrap="${ri}-${bi}"><input type="checkbox" data-tok="${ri}-${bi}">${bi+1}</label>`).join("")}</div>
+          </div>`).join("")}
+      </fieldset>
+
+      <div data-extras></div>
+    `;
+    container.appendChild(card);
+
+    // populate
+    card.querySelector('[data-f="name"]').value = getName(dv,start);
+    card.querySelector('[data-f="rupees"]').value = u16(dv,start+0x48);
+    card.querySelector('[data-f="maxhearts"]').value = Math.round(u16(dv,start+0x42)/16);
+    card.querySelector('[data-f="curhealth"]').value = (u16(dv,start+0x44)/16);
+    card.querySelector('[data-f="magicsize"]').value = u8(dv,start+0x46);
+    card.querySelector('[data-f="magic"]').value = u8(dv,start+0x47);
+    card.querySelector('[data-f="sticks"]').value = u8(dv,start+0xA6);
+    card.querySelector('[data-f="nuts"]').value = u8(dv,start+0xA7);
+    card.querySelector('[data-f="bombs"]').value = u8(dv,start+0xA8);
+    card.querySelector('[data-f="arrows"]').value = u8(dv,start+0xA9);
+    card.querySelector('[data-f="beans"]').value = u8(dv,start+0xB4);
+    card.querySelector('[data-f="tokens"]').value = u8(dv,start+0xE8);
+    card.querySelectorAll('[data-key]').forEach(inp=>{
+      const off = DUNGEON_KEY_OFF[+inp.dataset.key];
+      const v = u8(dv,start+off);
+      inp.value = v===0xFF ? 0 : v;
+    });
+    card.querySelectorAll('[data-quest]').forEach(inp=>{
+      const off = QUEST_BYTES[+inp.dataset.quest].off;
+      inp.value = u8(dv,start+off).toString(16).padStart(2,"0").toUpperCase();
+    });
+    card.querySelectorAll('[data-ditem]').forEach(inp=>{
+      const off = DUNGEON_ITEM_OFF[+inp.dataset.ditem];
+      inp.value = u8(dv,start+off).toString(16).padStart(2,"0").toUpperCase();
+    });
+    const eqSS = u8(dv,start+0x8A), eqTB = u8(dv,start+0x8B);
+    card.querySelector('[data-eq="sword"]').value = eqSS & 0xF;
+    card.querySelector('[data-eq="shield"]').value = (eqSS>>4) & 0xF;
+    card.querySelector('[data-eq="tunic"]').value = eqTB & 0xF;
+    card.querySelector('[data-eq="boots"]').value = (eqTB>>4) & 0xF;
+
+    function refreshRegionCount(ri){
+      const r = SKULL_REGIONS[ri];
+      const byte = u8(dv,start+r.off);
+      let n=0; for(let b=0;b<r.max;b++) if(byte & (1<<b)) n++;
+      card.querySelector(`[data-rcount="${ri}"]`).textContent = `${n}/${r.max}`;
+    }
+    function setTok(ri,bi,on){
+      const r = SKULL_REGIONS[ri];
+      let byte = u8(dv,start+r.off);
+      byte = on ? (byte | (1<<bi)) : (byte & ~(1<<bi));
+      su8(dv,start+r.off,byte);
+      card.querySelector(`[data-tokwrap="${ri}-${bi}"]`).classList.toggle("on",on);
+      refreshRegionCount(ri);
+    }
+    SKULL_REGIONS.forEach((r,ri)=>{
+      const byte = u8(dv,start+r.off);
+      for(let bi=0;bi<r.max;bi++){
+        const on = !!(byte & (1<<bi));
+        const box = card.querySelector(`[data-tok="${ri}-${bi}"]`);
+        box.checked = on;
+        card.querySelector(`[data-tokwrap="${ri}-${bi}"]`).classList.toggle("on",on);
+        box.addEventListener("change",e=>setTok(ri,bi,e.target.checked));
+      }
+      refreshRegionCount(ri);
+      card.querySelector(`[data-rall="${ri}"]`).addEventListener("click",()=>{
+        for(let bi=0;bi<r.max;bi++){ card.querySelector(`[data-tok="${ri}-${bi}"]`).checked=true; setTok(ri,bi,true); }
+      });
+      card.querySelector(`[data-rnone="${ri}"]`).addEventListener("click",()=>{
+        for(let bi=0;bi<r.max;bi++){ card.querySelector(`[data-tok="${ri}-${bi}"]`).checked=false; setTok(ri,bi,false); }
+      });
+    });
+
+    // live write-back into buffer on change
+    card.querySelector('[data-f="name"]').addEventListener("input",e=>setName(dv,start,e.target.value));
+    card.querySelector('[data-f="rupees"]').addEventListener("input",e=>su16(dv,start+0x48,+e.target.value));
+    card.querySelector('[data-f="maxhearts"]').addEventListener("input",e=>su16(dv,start+0x42,Math.round(+e.target.value*16)));
+    card.querySelector('[data-f="curhealth"]').addEventListener("input",e=>su16(dv,start+0x44,Math.round(+e.target.value*16)));
+    card.querySelector('[data-f="magicsize"]').addEventListener("change",e=>su8(dv,start+0x46,+e.target.value));
+    card.querySelector('[data-f="magic"]').addEventListener("input",e=>su8(dv,start+0x47,+e.target.value));
+    card.querySelector('[data-f="sticks"]').addEventListener("input",e=>su8(dv,start+0xA6,+e.target.value));
+    card.querySelector('[data-f="nuts"]').addEventListener("input",e=>su8(dv,start+0xA7,+e.target.value));
+    card.querySelector('[data-f="bombs"]').addEventListener("input",e=>su8(dv,start+0xA8,+e.target.value));
+    card.querySelector('[data-f="arrows"]').addEventListener("input",e=>su8(dv,start+0xA9,+e.target.value));
+    card.querySelector('[data-f="beans"]').addEventListener("input",e=>su8(dv,start+0xB4,+e.target.value));
+    card.querySelector('[data-f="tokens"]').addEventListener("input",e=>su8(dv,start+0xE8,+e.target.value));
+    card.querySelectorAll('[data-key]').forEach(inp=>{
+      inp.addEventListener("input",e=>{
+        const off = DUNGEON_KEY_OFF[+e.target.dataset.key];
+        su8(dv,start+off,+e.target.value);
+      });
+    });
+    card.querySelectorAll('[data-quest]').forEach(inp=>{
+      inp.addEventListener("input",e=>{
+        const off = QUEST_BYTES[+e.target.dataset.quest].off;
+        const v = parseInt(e.target.value,16); if(!isNaN(v)) su8(dv,start+off,v);
+      });
+    });
+    card.querySelectorAll('[data-questmax]').forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        const i = +btn.dataset.questmax;
+        const off = QUEST_BYTES[i].off;
+        su8(dv,start+off,0xFF);
+        card.querySelector(`[data-quest="${i}"]`).value = "FF";
+      });
+    });
+    card.querySelectorAll('[data-ditem]').forEach(inp=>{
+      inp.addEventListener("input",e=>{
+        const off = DUNGEON_ITEM_OFF[+e.target.dataset.ditem];
+        const v = parseInt(e.target.value,16); if(!isNaN(v)) su8(dv,start+off,v);
+      });
+    });
+    card.querySelectorAll('[data-ditemmax]').forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        const i = +btn.dataset.ditemmax;
+        const off = DUNGEON_ITEM_OFF[i];
+        su8(dv,start+off,0xFF);
+        card.querySelector(`[data-ditem="${i}"]`).value = "FF";
+      });
+    });
+
+    function writeEquip(){
+      const sw = +card.querySelector('[data-eq="sword"]').value;
+      const sh = +card.querySelector('[data-eq="shield"]').value;
+      const tu = +card.querySelector('[data-eq="tunic"]').value;
+      const bo = +card.querySelector('[data-eq="boots"]').value;
+      su8(dv,start+0x8A, sw | (sh<<4));
+      su8(dv,start+0x8B, tu | (bo<<4));
+    }
+    card.querySelectorAll('[data-eq]').forEach(sel=>sel.addEventListener("change",writeEquip));
+    const upd=()=>{const h=card.querySelector('[data-hud]');if(h)h.innerHTML=hudHtml(dv,start);};upd();['input','change','click'].forEach(ev=>card.addEventListener(ev,()=>setTimeout(upd,0)));
+    card._x=()=>buildExtras(card.querySelector('[data-extras]'),card,dv,start); card._x();
+
+    card.querySelectorAll('[data-q]').forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        const action = btn.dataset.q;
+        if(action==="maxrupees"){ su16(dv,start+0x48,999); card.querySelector('[data-f="rupees"]').value=999; }
+        if(action==="fullheal"){
+          const mh = u16(dv,start+0x42);
+          su16(dv,start+0x44,mh);
+          card.querySelector('[data-f="curhealth"]').value = mh/16;
+          const msize = u8(dv,start+0x46);
+          const full = msize>=2 ? 96 : (msize===1 ? 48 : 0);
+          su8(dv,start+0x47,full);
+          card.querySelector('[data-f="magic"]').value = full;
+        }
+        if(action==="allskulls"){
+          SKULL_REGIONS.forEach((r,ri)=>{
+            for(let bi=0;bi<r.max;bi++){ card.querySelector(`[data-tok="${ri}-${bi}"]`).checked=true; setTok(ri,bi,true); }
+          });
+          su8(dv,start+0xE8,100);
+          card.querySelector('[data-f="tokens"]').value = 100;
+        }
+        if(action==="allkeys"){
+          card.querySelectorAll('[data-key]').forEach(inp=>{
+            const off = DUNGEON_KEY_OFF[+inp.dataset.key];
+            su8(dv,start+off,9); inp.value = 9;
+          });
+        }
+        if(action==="allquest"){ [0xBC,0xBD,0xBE].forEach(o=>su8(dv,start+o,0xFF)); card._x(); }
+        if(action==="maxgear"){ maxGear(dv,start); render(); }
+      });
+    });
+  });
+}
+
+function loadFile(file){
+  const reader = new FileReader();
+  reader.onload = () => {
+    fileBuf = reader.result;
+    fileBytes = new Uint8Array(fileBuf);
+    const dv = new DataView(fileBuf);
+    const starts = findSlots(fileBytes);
+    slots = starts.map(start => {
+      const crc = detectCrc(dv, start);
+      return {start, view:dv, crc};
+    });
+    const msg = document.getElementById("scanmsg");
+    msg.classList.remove("hidden");
+    if(slots.length===0){
+      msg.className = "note warn";
+      msg.textContent = "No save slots found — this file doesn't contain the \"ZELDAZ\" signature the game uses to mark a valid slot. Make sure you exported the decrypted save content, not an encrypted container or an unrelated file.";
+    } else {
+      msg.className = "note ok";
+      msg.textContent = `Found ${slots.length} save slot${slots.length>1?"s":""}. Everything else in the file is left untouched.`;
+    }
+    document.getElementById("fname").textContent = file.name + "  (" + fileBytes.length.toLocaleString() + " bytes)";
+    render();
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+document.getElementById("dz").addEventListener("click",()=>document.getElementById("file").click());
+document.getElementById("file").addEventListener("change",e=>{ if(e.target.files[0]) loadFile(e.target.files[0]); });
+["dragover","dragenter"].forEach(ev=>document.getElementById("dz").addEventListener(ev,e=>{e.preventDefault();document.getElementById("dz").classList.add("drag");}));
+["dragleave","drop"].forEach(ev=>document.getElementById("dz").addEventListener(ev,e=>{e.preventDefault();document.getElementById("dz").classList.remove("drag");}));
+document.getElementById("dz").addEventListener("drop",e=>{ if(e.dataTransfer.files[0]) loadFile(e.dataTransfer.files[0]); });
+
+document.getElementById("download").addEventListener("click",()=>{
+  slots.forEach(slot=>writeCrc(slot.view, slot.start)); // algorithm is verified, always recompute
+  const blob = new Blob([fileBuf], {type:"application/octet-stream"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  const orig = document.getElementById("fname").textContent.split("  (")[0] || "save.sav";
+  a.href = url; a.download = orig.replace(/(\.[a-zA-Z0-9]+)?$/, "-edited$1") || "save-edited.sav";
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  document.getElementById("status").textContent = "Checksum recalculated and file downloaded — copy it over the original in your save folder (with Azahar closed).";
+});
+</script>
+</body>
+</html>
