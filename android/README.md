@@ -31,28 +31,6 @@ real Storage Access Framework and a real WebView on real hardware. That code
 follows standard, well-documented Android APIs, but "should work" isn't the
 same as "tested," and I want to be upfront about that distinction.
 
-## How to build it
-
-1. Install [Android Studio](https://developer.android.com/studio) (free) on a
-   PC or Mac.
-2. **File → Open**, and select this project's root folder (the one with this
-   README in it).
-3. Android Studio will detect there's no Gradle wrapper jar (I couldn't
-   download one) and offer to fetch it — accept that. If it doesn't ask
-   automatically, use **File → Sync Project with Gradle Files**.
-4. It will also ask you to set your SDK location the first time — accept the
-   default, or point it at your existing SDK install. This writes
-   `local.properties`, which is intentionally not included here since it's
-   machine-specific.
-5. Plug in your Android device (e.g. the Ayn Thor) via USB with developer options / USB debugging enabled,
-   and hit **Run ▶** — Android Studio installs and launches it directly. Or
-   use **Build → Build APK(s)** to get an installable file you can copy over
-   and open on your device (enable "install unknown apps" for whichever app you
-   use to open it).
-
-Debug builds are self-signed automatically by Android Studio's built-in debug
-key, so no extra signing setup is needed just to try it out on your own device.
-
 ## If Android blocks browsing to Azahar's folder
 
 Android 11+ restricts general access to other apps' `Android/data` folders in
