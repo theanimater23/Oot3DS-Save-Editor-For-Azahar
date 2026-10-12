@@ -1,8 +1,6 @@
 # OoT3D Save Editor
 
-A save file editor for *The Legend of Zelda: Ocarina of Time 3D*, built for the
-Azahar emulator (and any other setup that gives you access to a raw save file).
-Runs entirely in your browser — nothing you load is ever uploaded anywhere.
+A save file editor for The Legend of Zelda: Ocarina of Time 3D, primarily designed for Android devices running the Azahar emulator, including devices like the AYN Thor. It also supports other setups that provide access to a raw save file. The editor runs in your browser or as an android app, and no files you load are ever uploaded anywhere.
 
 ![Story Progress panel](screenshots/hero.png)
 
