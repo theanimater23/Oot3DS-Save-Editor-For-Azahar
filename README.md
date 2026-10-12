@@ -29,40 +29,6 @@ Runs entirely in your browser — nothing you load is ever uploaded anywhere.
 
 ![Dungeon Completion panel](screenshots/dungeon-completion.png)
 
-## How to use it
-
-**Option 1 — just open the file.** Download `oot3d-save-editor.html` from
-this repo and open it in any browser (double-click it, or drag it into a
-browser window). That's it — it's one self-contained file.
-
-**Option 2 — host it yourself.** Turn on GitHub Pages for this repo
-(Settings → Pages → deploy from the `main` branch) and you'll have a shareable
-link to the live tool.
-
-Then:
-
-1. **Find your save file.** In Azahar, right-click the game in your game list
-   and look for something like *Open Save Data Location* — that opens a
-   folder with your save file in it.
-2. **Make a spare copy** of that file before you touch anything.
-3. **Load it into the editor**, make your changes — every field updates
-   instantly.
-4. **Download the edited file.** It's saved as a new file; your original is
-   never overwritten by the tool itself. Copy the new file into the save
-   folder from step 1, replacing the original, then load your save in the
-   game. **Azahar must be fully closed** while you do this, or it'll
-   overwrite your edit when it next writes to disk.
-
-### Android app
-
-The `android/` folder is a full Android Studio project that wraps the same
-editor in a native app with real file access (Android's Storage Access
-Framework): pick your save file once, and the app remembers it and writes
-changes straight back in place — no manual copying. See
-[`android/README.md`](android/README.md) for build instructions.
-
-## Accuracy, and the GUESS tags
-
 ![Story Progress flags with GUESS tags](screenshots/story-progress.png)
 
 This save format isn't officially documented by Nintendo. Everything here is
